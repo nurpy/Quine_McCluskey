@@ -33,7 +33,7 @@ class new_1
 class functions
 {
 	public static String convertExpression(int minterm,Set<Integer> bitExclusion){
-		char[] letters = {'a','b','c','d'};
+		char[] letters = {'b','a','d','c'};
 		String returnString="";
 		int tempMinterm=minterm;
 		
@@ -55,6 +55,7 @@ class functions
 			}
 			count++;
 		}
+		
 		return returnString;
 			
 		
@@ -70,6 +71,8 @@ class functions
 	public static int detemrineImplicant(expression n1, expression n2){
 		int n=Math.abs(n2.minterm-n1.minterm);
 		int count=0;
+		if(n==0)
+			return -1;
 		for(int i=1; i<n;i<<=1){
 			count++;
 			if(n==i)
@@ -79,7 +82,7 @@ class functions
 		return count;
 	}
 	public static Set<Integer> primeImplicants(int num,int MSB,Set<Integer> bitExclusion){
-		System.out.println(bitExclusion);
+		
 		bitExclusion =new HashSet<Integer>();
 		Set<Integer> n =new HashSet<Integer>();
 		int temp=num;
@@ -102,7 +105,7 @@ class equation{
 	List<expression> minterms;
 	List<expression> implicants;
 	Set<expression> connections;
-
+	public int iterations=0;
 	public int MSB;
 	equation(Scanner scan,int MSB){
 		this.MSB=MSB;
@@ -118,7 +121,9 @@ class equation{
 	public void minimizeExpression(){
 		for(expression n: minterms){
 			for(expression h: minterms){
-				if(n.possibleMatches.contains(h.minterm)|| h.possibleMatches.contains(n.minterm)){
+				
+
+				if(n.possibleMatches.contains(h.minterm)|| h.possibleMatches.contains(n.minterm) || n.equals(h)){
 					expression newExpression = new expression(n.minterm,MSB,functions.detemrineImplicant(n,h));
 					newExpression.getExpression();
 					implicants.add(newExpression);
@@ -127,22 +132,30 @@ class equation{
 			}
 		}
 		minterms.clear();
-		
 		for(expression i: implicants){
+			
 			if(!minterms.contains(i))
 				minterms.add(i);
 		}
-				
+		
+		iterations++;	
 		implicants.clear();
 	}
 	public void minimizeQuine(){
 		for(expression n: minterms){
 			for(expression h: minterms){
-				if(n.possibleMatches.contains(h.minterm) || h.possibleMatches.contains(n.minterm)){
+				//System.out.println(n.rep);
+				
+				if(n.possibleMatches.contains(h.minterm) || h.possibleMatches.contains(n.minterm)|| n.equals(h)){
+					String temp=n.rep.replace("'","");
+					int numOfDashes= temp.length()-temp.replace("-","").length();
+					if(numOfDashes >iterations-1){
+						continue;
+					}
+					
 					int excludeBit=functions.detemrineImplicant(n,h);
-					h.exclusionBits.addAll(n.exclusionBits);
-					h.exclusionBits.add(excludeBit);
-					expression newExpression = new expression(n.minterm,MSB,h.exclusionBits);
+					n.exclusionBits.add(excludeBit);
+					expression newExpression = new expression(n.minterm,MSB,n.exclusionBits);
 					newExpression.getExpression();
 					
 					implicants.add(newExpression);
@@ -151,11 +164,14 @@ class equation{
 			}
 		}
 		minterms.clear();
-		
+		iterations++;
+		System.out.println(iterations);
 		for(expression i: implicants){
-			System.out.println(i.rep);
-			if(!minterms.contains(i))
-				minterms.add(i);
+			
+			
+			if(!minterms.contains(i)){
+					minterms.add(i);
+			}
 		}
 				
 		implicants.clear();
@@ -166,13 +182,8 @@ class equation{
 	public String toString(){
 		String returnString="";
 		for(expression n: minterms){
-			//n.getExpression();
-			returnString+=Integer.toString(n.minterm);
-			returnString+=", ";
-			returnString+= n.exclusionBits;
-			returnString+=", ";
-			returnString+= n.rep;
-			returnString+=", ";
+			returnString+= n.rep.replace("-","");
+			returnString+=" + ";
 		}
 		implicants.clear();
 		return returnString;
@@ -213,6 +224,10 @@ class expression{
 	void createPrimeImplicants(){
 		possibleMatches=functions.primeImplicants(minterm,MSB,exclusionBits);
 	}
+	public String toString(){
+		String returnString = rep;
+		return returnString;
+	}
 	public boolean equals(Object obj){
 		if (this == obj){
 			return true;
@@ -222,11 +237,15 @@ class expression{
 		if (getClass() != obj.getClass())
 			return false;
 		expression trueOBJ = (expression) obj;
-		if(trueOBJ.rep.equals(this.rep))
+		if(trueOBJ.rep == null || this.rep == null)
+			return false;
+		if(trueOBJ.rep.equals(this.rep)) 
 			return true;
+		
 		return false;
+		}
 		
 	}
 	
-}
+
 
