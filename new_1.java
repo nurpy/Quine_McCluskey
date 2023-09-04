@@ -13,8 +13,16 @@ class new_1
 		equation quine = new equation(scan,MSB);
 		quine.minimizeExpression();
 		System.out.println(quine);
-		quine.minimizeExpression();
+		System.out.println("----next line-----");
+		quine.minimizeQuine();
 		System.out.println(quine);
+		System.out.println("----next line-----");
+		quine.minimizeQuine();
+		System.out.println(quine);
+		System.out.println("----next line-----");
+		quine.minimizeQuine();
+		System.out.println(quine);
+		
 		
 
 	}
@@ -24,6 +32,34 @@ class new_1
 }
 class functions
 {
+	public static String convertExpression(int minterm,Set<Integer> bitExclusion){
+		char[] letters = {'a','b','c','d'};
+		String returnString="";
+		int tempMinterm=minterm;
+		
+		//bitExclusion = new HashSet<Integer>();
+		int count=0;
+		
+		for(int i=1; i<Math.pow(letters.length,2);i<<=1){
+			if(bitExclusion.contains(count)){
+				returnString+="-";
+				count++;
+				continue;
+			}
+			if((tempMinterm&i) !=0){
+				returnString+=letters[count];
+			}
+			else{
+				returnString+=letters[count];
+				returnString+="'";
+			}
+			count++;
+		}
+		return returnString;
+			
+		
+		
+	}
 	public static List<Integer> parseInts(Scanner scan){
 		List<Integer> nums = new ArrayList<Integer>();
 		while(scan.hasNextInt()){
@@ -32,17 +68,18 @@ class functions
 		return nums;
 	}
 	public static int detemrineImplicant(expression n1, expression n2){
-		int n=Math.abs(n1.minterm-n2.minterm);
+		int n=Math.abs(n2.minterm-n1.minterm);
 		int count=0;
 		for(int i=1; i<n;i<<=1){
 			count++;
 			if(n==i)
 				break;
 		}
-		System.out.println(count);
+		
 		return count;
 	}
 	public static Set<Integer> primeImplicants(int num,int MSB,Set<Integer> bitExclusion){
+		System.out.println(bitExclusion);
 		bitExclusion =new HashSet<Integer>();
 		Set<Integer> n =new HashSet<Integer>();
 		int temp=num;
@@ -64,6 +101,7 @@ class functions
 class equation{
 	List<expression> minterms;
 	List<expression> implicants;
+	Set<expression> connections;
 
 	public int MSB;
 	equation(Scanner scan,int MSB){
@@ -80,27 +118,60 @@ class equation{
 	public void minimizeExpression(){
 		for(expression n: minterms){
 			for(expression h: minterms){
-				System.out.println(n.possibleMatches);
-				if(n.possibleMatches.contains(h.minterm)){
-					implicants.add(new expression(n.minterm,MSB,functions.detemrineImplicant(n,h)));
+				if(n.possibleMatches.contains(h.minterm)|| h.possibleMatches.contains(n.minterm)){
+					expression newExpression = new expression(n.minterm,MSB,functions.detemrineImplicant(n,h));
+					newExpression.getExpression();
+					implicants.add(newExpression);
 				}
 				
 			}
 		}
 		minterms.clear();
+		
 		for(expression i: implicants){
-			minterms.add(i);
+			if(!minterms.contains(i))
+				minterms.add(i);
 		}
+				
 		implicants.clear();
+	}
+	public void minimizeQuine(){
+		for(expression n: minterms){
+			for(expression h: minterms){
+				if(n.possibleMatches.contains(h.minterm) || h.possibleMatches.contains(n.minterm)){
+					int excludeBit=functions.detemrineImplicant(n,h);
+					h.exclusionBits.addAll(n.exclusionBits);
+					h.exclusionBits.add(excludeBit);
+					expression newExpression = new expression(n.minterm,MSB,h.exclusionBits);
+					newExpression.getExpression();
+					
+					implicants.add(newExpression);
+				}
+				
+			}
+		}
+		minterms.clear();
+		
+		for(expression i: implicants){
+			System.out.println(i.rep);
+			if(!minterms.contains(i))
+				minterms.add(i);
+		}
+				
+		implicants.clear();
+		
 	}
 	
 	
 	public String toString(){
 		String returnString="";
 		for(expression n: minterms){
+			//n.getExpression();
 			returnString+=Integer.toString(n.minterm);
 			returnString+=", ";
 			returnString+= n.exclusionBits;
+			returnString+=", ";
+			returnString+= n.rep;
 			returnString+=", ";
 		}
 		implicants.clear();
@@ -108,10 +179,11 @@ class equation{
 	}
 }
 class expression{
-	Set<Integer> possibleMatches;
+	public Set<Integer> possibleMatches;
 	int minterm;
 	int MSB;
-	Set<Integer> exclusionBits;
+	String rep;
+	public Set<Integer> exclusionBits;
 	expression(int minterm, int MSB){
 		this.MSB=MSB;
 		this.minterm=minterm;
@@ -124,19 +196,37 @@ class expression{
 		exclusionBits.add(exclusionBit);
 		createPrimeImplicants();
 	}
-	void getExpression(){
+	expression(int minterm, int MSB,Set<Integer> exclusionBits){
+		this.MSB=MSB;
+		this.minterm=minterm;
+		this.exclusionBits= exclusionBits;
+		createPrimeImplicants();
+	}
+	String getExpression(){
+	
+		String s =functions.convertExpression(minterm,exclusionBits);
+		
+		this.rep=s;
+		return s;
 		
 	}
 	void createPrimeImplicants(){
-		
 		possibleMatches=functions.primeImplicants(minterm,MSB,exclusionBits);
+	}
+	public boolean equals(Object obj){
+		if (this == obj){
+			return true;
+		}
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		expression trueOBJ = (expression) obj;
+		if(trueOBJ.rep.equals(this.rep))
+			return true;
+		return false;
+		
 	}
 	
 }
-class Connection{
-	
-	
-	
-	
-	
-}
+
