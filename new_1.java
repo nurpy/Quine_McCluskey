@@ -8,7 +8,7 @@ class new_1
 {
 	public static void main(String[] args)
 	{
-		final int MSB=4;
+		final int MSB=5;
 		Scanner scan = new Scanner(System.in);
 		equation quine = new equation(scan,MSB);
 		quine.minimizeExpression();
@@ -33,7 +33,7 @@ class new_1
 class functions
 {
 	public static String convertExpression(int minterm,Set<Integer> bitExclusion){
-		char[] letters = {'b','a','d','c'};
+		char[] letters = {'b','a','d','c','e'};
 		String returnString="";
 		int tempMinterm=minterm;
 		
@@ -61,7 +61,10 @@ class functions
 		
 		
 	}
+	
+	
 	public static List<Integer> parseInts(Scanner scan){
+		System.out.println("enter numbers");
 		List<Integer> nums = new ArrayList<Integer>();
 		while(scan.hasNextInt()){
 			nums.add(scan.nextInt());
@@ -109,11 +112,26 @@ class equation{
 	public int MSB;
 	equation(Scanner scan,int MSB){
 		this.MSB=MSB;
+		
+		
+		
 		implicants = new ArrayList<expression>();
 		List<Integer> parsednums= functions.parseInts(scan);
+		
+		
 		minterms=new ArrayList<expression>();
 		for( int num: parsednums){
-			minterms.add(new expression(num, MSB));
+			expression n = new expression(num, MSB);
+			n.dontCare=false;
+			minterms.add(n);
+		}
+		System.out.println("entered");
+		
+		List<Integer> parsednums2=(functions.parseInts(scan));
+		for( int num: parsednums2){
+			expression n = new expression(num, MSB);
+			n.dontCare=true;
+			minterms.add(n);
 		}
 		
 	}
@@ -142,14 +160,16 @@ class equation{
 		implicants.clear();
 	}
 	public void minimizeQuine(){
+		List<expression> tempList = new ArrayList<expression>();
 		for(expression n: minterms){
 			for(expression h: minterms){
 				//System.out.println(n.rep);
 				
-				if(n.possibleMatches.contains(h.minterm) || h.possibleMatches.contains(n.minterm)|| n.equals(h)){
+				if((n.possibleMatches.contains(h.minterm) || h.possibleMatches.contains(n.minterm)|| n.equals(h))){
 					String temp=n.rep.replace("'","");
 					int numOfDashes= temp.length()-temp.replace("-","").length();
 					if(numOfDashes >iterations-1){
+						tempList.add(n);
 						continue;
 					}
 					
@@ -163,6 +183,11 @@ class equation{
 				
 			}
 		}
+		if(tempList.equals(minterms)){
+			implicants.addAll(tempList);
+		}
+		
+		
 		minterms.clear();
 		iterations++;
 		System.out.println(iterations);
@@ -194,6 +219,7 @@ class expression{
 	int minterm;
 	int MSB;
 	String rep;
+	public boolean dontCare=false;
 	public Set<Integer> exclusionBits;
 	expression(int minterm, int MSB){
 		this.MSB=MSB;
